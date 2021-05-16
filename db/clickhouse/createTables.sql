@@ -6,7 +6,7 @@ CREATE TABLE hyperledger.blocks
     blockchain_id  UInt32,
     block          UInt32,   -- block_number
 
-    block_tx_count Int64,    -- count transactions in the block
+    block_tx_count UInt32,   -- count transactions in the block
     block_hash     String,
 
     data_hash      String,
@@ -29,9 +29,7 @@ CREATE TABLE hyperledger.transactions
     validation_code       String,   -- VALID or INVALID
 
     payload_proposal_hash String,
-    payload               String,   -- need??
-
-    write_set             String    -- need??
+    payload               String    -- need??
 ) ENGINE = MergeTree ORDER BY block;
 
 
@@ -56,22 +54,24 @@ CREATE TABLE hyperledger.write_set_txs
 
 CREATE TABLE IF NOT EXISTS hyperledger.transfers
 (
-    tx_date       Date,     -- only DATE from datetime
-    tx_time       DateTime, -- only TIME from datetime
+    tx_date         Date,     -- only DATE from datetime
+    tx_time         DateTime, -- only TIME from datetime
 
-    blockchain_id UInt32,
-    block         UInt32,   -- block_number
-    block_hash    String,
+    blockchain_id   UInt32,
+    block           UInt32,   -- block_number
+    block_hash      String,
 
-    tx_index      UInt32,
-    tx_hash       String,
-    tx_signer     String,
+    tx_index        UInt32,
+    tx_hash         String,
+    tx_signer       String,
+    tx_type         String,   -- function_name (transfer, pay, account, ...)
+    validation_code String,   -- VALID or INVALID
 
-    transfer_from String,
-    transfer_to   String,
+    transfer_from   String,   -- address from
+    transfer_to     String,   -- address to
 
-    currency_id   UInt32,
-    value         Decimal128(0)
+    currency_id     UInt32,
+    value           Decimal128(0)
 
 ) ENGINE = MergeTree ORDER BY block;
 
@@ -120,12 +120,12 @@ CREATE TABLE hyperledger.tx_payments
     -- PAYLOAD
     payload_pay_number               String,
     payload_pay_id                   String,
-    payload_pay_amount               Decimal128(0), -- type??
-    payload_pay_fee                  Decimal128(0), -- type??
-    payload_pay_total_refund         Decimal128(0), -- type??
+    payload_pay_amount               Decimal128(0),
+    payload_pay_fee                  Decimal128(0),
+    payload_pay_total_refund         Decimal128(0),
     payload_pay_rid                  String,
     payload_pay_order_id             UInt32,
-    payload_pay_memo                 String,        -- ?? payprotocol | memo
+    payload_pay_memo                 String,
     payload_pay_created_time         UInt32,
 
     payload_balance_log_number       String,
@@ -134,7 +134,7 @@ CREATE TABLE hyperledger.tx_payments
     payload_balance_log_diff         Decimal128(0), -- type?? value transfer amount
     payload_balance_log_fee          Decimal128(0), -- type??
     payload_balance_log_amount       Decimal128(0), -- type?? balance amount before transfer
-    payload_balance_log_memo         String,        -- ?? payprotocol | memo
+    payload_balance_log_memo         String,
     payload_balance_log_created_time DateTime,
     payload_balance_log_pay_id       String
 ) ENGINE = MergeTree ORDER BY block;

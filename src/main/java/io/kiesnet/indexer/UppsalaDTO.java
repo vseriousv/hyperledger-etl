@@ -9,6 +9,7 @@ public class UppsalaDTO {
 	public long block_number;
 	public long block_tx_count;
 	public String tx_id;
+	public String tx_method;
 	public Date tx_time;
 	public JSONObject payload;
 	public ArrayList<String> args = new ArrayList<String>();
@@ -19,12 +20,21 @@ public class UppsalaDTO {
 		// TODO Auto-generated constructor stub
 	}
 
-	public UppsalaDTO(long block_number, long block_tx_count, String tx_id, Date tx_time, JSONObject payload,
-                      ArrayList<String> args, ArrayList<JSONObject> tx_writeset) {
+	public UppsalaDTO(
+		long block_number,
+		long block_tx_count,
+		String tx_id,
+		String tx_method,
+		Date tx_time,
+		JSONObject payload,
+		ArrayList<String> args,
+		ArrayList<JSONObject> tx_writeset
+	) {
 		super();
 		this.block_number = block_number;
 		this.block_tx_count = block_tx_count;
 		this.tx_id = tx_id;
+		this.tx_method = tx_method;
 		this.tx_time = tx_time;
 		this.payload = payload;
 		this.args = args;
@@ -49,6 +59,10 @@ public class UppsalaDTO {
 
 	public String getTx_id() {
 		return tx_id;
+	}
+
+	public String getTx_method() {
+		return tx_method;
 	}
 
 	public void setTx_id(String tx_id) {
@@ -90,8 +104,8 @@ public class UppsalaDTO {
 	@Override
 	public String toString() {
 		return "UppsalaDTO \n [ \n block_number=" + block_number + ",\n block_tx_count=" + block_tx_count + ",\n tx_id=" + tx_id
-				+ ",\n tx_time=" + tx_time + ",\n payload=" + payload + ",\n args=" + args + ",\n tx_writeset=" + tx_writeset
-				+ "\n]";
+			+ ",\n tx_time=" + tx_time + ",\n payload=" + payload + ",\n args=" + args + ",\n tx_writeset=" + tx_writeset
+			+ "\n]";
 	}
 
 }

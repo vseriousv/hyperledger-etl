@@ -1,19 +1,12 @@
 package io.kiesnet.indexer.domain.ports;
 
+import io.kiesnet.indexer.UppsalaDTO;
 import io.kiesnet.indexer.domain.entity.BlockEntity;
-import org.json.simple.JSONObject;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Date;
 
 public interface BlockPort {
-	BlockEntity saveDb(
-		long block_number,
-		long block_tx_count,
-		String tx_id,
-		Date tx_time,
-		JSONObject payload,
-		ArrayList<String> args,
-		ArrayList<JSONObject> tx_writeset
-	);
+	Boolean saveDb(ArrayList<BlockEntity> blockEntities, long blockNumber, Integer limitSaveBlock) throws IOException, URISyntaxException, InterruptedException;
 }

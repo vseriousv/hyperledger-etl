@@ -1,30 +1,30 @@
 package io.kiesnet.indexer;
 
+import io.kiesnet.indexer.adapters.ClickhouseAdapter;
+import io.kiesnet.indexer.adapters.HyperledgerAdapter;
+import io.kiesnet.indexer.adapters.MySqlAdapter;
+import io.kiesnet.indexer.domain.ports.BlockPort;
+import io.kiesnet.indexer.domain.ports.BlockchainConnectPort;
+import io.kiesnet.indexer.domain.ports.StoragePort;
 import org.hyperledger.fabric.sdk.exception.InvalidArgumentException;
 import org.hyperledger.fabric.sdk.exception.ProposalException;
-import org.hyperledger.fabric.sdk.exception.TransactionException;
 import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
+import java.sql.SQLException;
 
 @Component
 public class ScheduledTasks {
-	private static final Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
-
-	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
-
-	//    @Scheduled(cron="* * * * *)
-//	@Scheduled(fixedRate = 500000)
 	@Autowired
-	public void reportCurrentTime() throws InvalidArgumentException, TransactionException, ProposalException, ParseException, IOException {
-		log.info("The time is now {}", dateFormat.format(new Date()));
-		Scan.worker();
+	public void reportCurrentTime() throws InvalidArgumentException, ProposalException, ParseException, IOException, SQLException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, URISyntaxException, InterruptedException {
+		BlockPort blockPort = new ClickhouseAdapter();
+		BlockchainConnectPort blockchainConnectPort = new HyperledgerAdapter();
+		StoragePort storagePort = new MySqlAdapter("jdbc:mysql://localhost:3306/bitquery", "root", "password");
+		Scan scan = new Scan(blockPort, blockchainConnectPort, storagePort);
+		scan.worker("payprotocol", 10, 7, 0);
 	}
 }
