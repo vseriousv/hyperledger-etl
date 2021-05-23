@@ -2,6 +2,7 @@ package io.kiesnet.indexer.adapters;
 
 import io.kiesnet.indexer.domain.entity.BlockEntity;
 import io.kiesnet.indexer.domain.entity.TransactionEntity;
+import io.kiesnet.indexer.domain.entity.WriteSetTxsEntity;
 import io.kiesnet.indexer.domain.ports.BlockPort;
 import org.springframework.cglib.core.Block;
 
@@ -16,9 +17,6 @@ import java.util.ArrayList;
 import java.util.Date;
 
 public class ClickhouseAdapter implements BlockPort {
-	private static final String testnetDataPath = "data/testnet/";
-	private static final String mainnetDataPath = "data/mainnet/";
-
 	private static final HttpClient httpClient = HttpClient.newBuilder()
 		.version(HttpClient.Version.HTTP_2)
 		.connectTimeout(Duration.ofSeconds(10))
@@ -34,20 +32,21 @@ public class ClickhouseAdapter implements BlockPort {
 					String txDate = dateFormat(transactionEntity.get_txDate(), "yyyy-MM-dd");
 					String txTime = dateFormat(transactionEntity.get_txTime(), "yyyy-MM-dd HH:mm:ss");
 
-					String query = "INSERT INTO transactions VALUES ('"+
-						txDate + "', '" +
-						txTime + "', " +
-						transactionEntity.get_blockchainId() + ", " +
-						transactionEntity.get_block() + ", '" +
-						transactionEntity.get_blockHash() + "', '" +
-						transactionEntity.get_txHash() + "', '" +
-						transactionEntity.get_chaincodeName() + "', '" +
-						transactionEntity.get_txType() + "', '" +
-						transactionEntity.get_validationCode() + "', '" +
-						transactionEntity.get_payloadProposalHash() + "', '" +
-						transactionEntity.get_payload() +
-						"')";
+					String query = "INSERT INTO transactions VALUES (";
+					query += stringSave(txDate, false);
+					query += stringSave(txTime, false);
+					query += numberSave(transactionEntity.get_blockchainId(), false);
+					query += numberSave(transactionEntity.get_block(), false);
+					query += stringSave(transactionEntity.get_blockHash(), false);
+					query += stringSave(transactionEntity.get_txHash(), false);
+					query += stringSave(transactionEntity.get_chaincodeName(), false);
+					query += stringSave(transactionEntity.get_txType(), false);
+					query += stringSave(transactionEntity.get_validationCode(), false);
+					query += stringSave(transactionEntity.get_payloadProposalHash(), false);
+					query += stringSave(transactionEntity.get_payload(), true);
+					query += ")";
 					httpResponse(query);
+					saveWriteSetTxs(transactionEntity);
 
 					switch (transactionEntity.get_txType()) {
 						case "transfer":
@@ -165,17 +164,69 @@ public class ClickhouseAdapter implements BlockPort {
 		String txDate = dateFormat(blockEntity.get_txDate(), "yyyy-MM-dd");
 		String txTime = dateFormat(blockEntity.get_txTime(), "yyyy-MM-dd HH:mm:ss");
 
-		String query = "INSERT INTO blocks VALUES ('"+
-			txDate + "', '" +
-			txTime + "', " +
-			blockEntity.get_blockchainId() + ", " +
-			blockEntity.get_block() + ", " +
-			blockEntity.get_blockTxCount() + ", '" +
-			blockEntity.get_blockHash() + "', '" +
-			blockEntity.get_dataHash() + "', '" +
-			blockEntity.get_previousHash() +
-			"')";
+		String query = "INSERT INTO blocks VALUES (";
+		query += stringSave(txDate, false);
+		query += stringSave(txTime, false);
+		query += numberSave(blockEntity.get_blockchainId(), false);
+		query += numberSave(blockEntity.get_block(), false);
+		query += numberSave(blockEntity.get_blockTxCount(), false);
+		query += stringSave(blockEntity.get_blockHash(), false);
+		query += stringSave(blockEntity.get_dataHash(), false);
+		query += stringSave(blockEntity.get_previousHash(), true);
+		query += ")";
 		httpResponse(query);
+	}
+
+	private void saveWriteSetTxs(TransactionEntity transactionEntity) throws IOException, InterruptedException {
+		System.out.println("Save Write set txs: " + transactionEntity.get_txHash());
+
+		String insertInto = "INSERT INTO write_set_txs VALUES";
+		String query = "";
+
+		for (WriteSetTxsEntity writeSetTxsEntity : transactionEntity.get_writeSetTxsEntities()) {
+			String txDate = dateFormat(writeSetTxsEntity.get_txDate(), "yyyy-MM-dd");
+			String txTime = dateFormat(writeSetTxsEntity.get_txTime(), "yyyy-MM-dd HH:mm:ss");
+			query += "(";
+			query += stringSave(txDate, false);
+			query += stringSave(txTime, false);
+			query += numberSave(writeSetTxsEntity.get_blockchainId(), false);
+			query += numberSave(writeSetTxsEntity.get_block(), false);
+			query += stringSave(writeSetTxsEntity.get_blockHash(), false);
+			query += stringSave(writeSetTxsEntity.get_txHash(), false);
+			query += stringSave(writeSetTxsEntity.get_chaincodeName(), false);
+			query += numberSave(writeSetTxsEntity.get_setIndex(), false);
+			query += stringSave(writeSetTxsEntity.get_setKey(), false);
+			query += stringSave(writeSetTxsEntity.get_setValue(), false);
+			query += booleanSave(writeSetTxsEntity.get_setIsDelete(), true);
+			query += "),";
+		}
+		System.out.println(insertInto + query.substring(0, query.length() - 1) + ";");
+		httpResponse(insertInto + query.substring(0, query.length() - 1) + ";");
+	}
+
+	private String stringSave(String str, Boolean close) {
+		if (close) {
+			return "'" + str + "' ";
+		} else {
+			return "'" + str + "', ";
+		}
+	}
+
+	private String numberSave(long number, Boolean close) {
+		if (close) {
+			return "" + number + " ";
+		} else {
+			return "" + number + ", ";
+		}
+	}
+
+	private String booleanSave(boolean flag, Boolean close) {
+		int flagInt = flag ? 1 : 0;
+		if (close) {
+			return "" + flagInt + " ";
+		} else {
+			return "" + flagInt + ", ";
+		}
 	}
 
 	private String dateFormat(Date date, String pattern) {
@@ -197,9 +248,3 @@ public class ClickhouseAdapter implements BlockPort {
 		return response;
 	}
 }
-
-// Set as your own computer path
-//	FileWriter writer = new FileWriter(testnetDataPath + "test-" + transactionEntity.get_block() + "_" + transactionEntity.get_txHash() + ".txt");
-//			writer.write(transactionEntity.toString());
-//				writer.flush();
-//				writer.close();

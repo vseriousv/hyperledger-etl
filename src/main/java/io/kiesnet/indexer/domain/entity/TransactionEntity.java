@@ -1,5 +1,6 @@
 package io.kiesnet.indexer.domain.entity;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 public class TransactionEntity {
@@ -14,6 +15,7 @@ public class TransactionEntity {
 	private String _validationCode;
 	private String _payloadProposalHash;
 	private String _payload;
+	private ArrayList<WriteSetTxsEntity> _writeSetTxsEntities;
 
 //	for tx_payments
 	private String _payloadPayNumber;
@@ -58,7 +60,8 @@ public class TransactionEntity {
 		String _txType,
 		String _validationCode,
 		String _payloadProposalHash,
-		String _payload
+		String _payload,
+		ArrayList<WriteSetTxsEntity> _writeSetTxsEntities
 	) {
 		this._txDate = _txDate;
 		this._txTime = _txTime;
@@ -71,6 +74,7 @@ public class TransactionEntity {
 		this._validationCode = _validationCode;
 		this._payloadProposalHash = _payloadProposalHash;
 		this._payload = _payload;
+		this._writeSetTxsEntities = _writeSetTxsEntities;
 	}
 
 	public Date get_txDate() {
@@ -117,4 +121,7 @@ public class TransactionEntity {
 		return _payload;
 	}
 
+	public ArrayList<WriteSetTxsEntity> get_writeSetTxsEntities() {
+		return _writeSetTxsEntities;
+	}
 }

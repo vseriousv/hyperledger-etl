@@ -3,6 +3,7 @@ package io.kiesnet.indexer;
 import io.kiesnet.indexer.domain.entity.BlockDataEntity;
 import io.kiesnet.indexer.domain.entity.BlockEntity;
 import io.kiesnet.indexer.domain.entity.TransactionEntity;
+import io.kiesnet.indexer.domain.entity.WriteSetTxsEntity;
 import io.kiesnet.indexer.domain.ports.BlockPort;
 import io.kiesnet.indexer.domain.ports.BlockchainConnectPort;
 import io.kiesnet.indexer.domain.ports.StoragePort;
@@ -14,6 +15,7 @@ import org.hyperledger.fabric.sdk.BlockInfo;
 import org.hyperledger.fabric.sdk.BlockInfo.EnvelopeInfo;
 import org.hyperledger.fabric.sdk.BlockchainInfo;
 import org.hyperledger.fabric.sdk.Channel;
+import org.hyperledger.fabric.sdk.TxReadWriteSetInfo;
 import org.hyperledger.fabric.sdk.exception.InvalidArgumentException;
 import org.hyperledger.fabric.sdk.exception.ProposalException;
 import org.json.simple.JSONObject;
@@ -23,10 +25,10 @@ import org.json.simple.parser.ParseException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Optional;
 
 public class Scan {
 	private BlockPort blockPort;
@@ -105,7 +107,7 @@ public class Scan {
 					String txMethod = null;
 					String chainCodeName = null;
 					byte[] proposalResponsePayload = null;
-					ArrayList<JSONObject> txWritesetJson = new ArrayList<JSONObject>();
+					ArrayList<WriteSetTxsEntity> txWriteSet = new ArrayList<WriteSetTxsEntity>();
 					ArrayList<String> argsList = new ArrayList<String>();
 
 					// Проверка валидности транзакции
@@ -130,6 +132,27 @@ public class Scan {
 						txPayload = new String(ta.getProposalResponsePayload());
 						proposalResponsePayload = ta.getProposalResponsePayload(); // тут есть отличие с сайтом, надо проверить у кого не правильно
 
+						// Парсинг writeSetTxs
+						for (TxReadWriteSetInfo.NsRwsetInfo nsRwSet : ta.getTxReadWriteSet().getNsRwsetInfos()) {
+							long writeSetCount = nsRwSet.getRwset().getWritesCount();
+							for (int i = 0; i < writeSetCount; i++) {
+								WriteSetTxsEntity writeSetTxsEntity = new WriteSetTxsEntity(
+									txTime,
+									txTime,
+									j,
+									blockData.get_blockchainId(),
+									Hex.toHexString(blockHash),
+									txId,
+									chainCodeName,
+									i,
+									nsRwSet.getRwset().getWrites(i).getKey(),
+									nsRwSet.getRwset().getWrites(i).getValue().toStringUtf8(),
+									nsRwSet.getRwset().getWrites(i).getIsDelete()
+								);
+								txWriteSet.add(writeSetTxsEntity);
+							}
+						}
+						// Составление сущности транзакции
 						TransactionEntity transactionEntity = new TransactionEntity(
 							txTime,
 							txTime,
@@ -141,31 +164,21 @@ public class Scan {
 							txMethod,
 							"VALID",
 							Hex.toHexString(proposalResponsePayload),
-							txPayload
+							txPayload,
+							txWriteSet
 						);
 						transactionEntities.add(transactionEntity);
-//						if (txMethod.equals("pay") ||
-//							txMethod.equals("pay/refund") ||
-//							txMethod.equals("transfer")
-//						) {
-//						txPayload = new String(ta.getProposalResponsePayload());
-//
-//						JSONObject txPayloadJson = strToJson(txPayload);
-//
-//						for (NsRwsetInfo nsrwset : ta.getTxReadWriteSet().getNsRwsetInfos()) {
-//							long writesetcount = nsrwset.getRwset().getWritesCount();
-//							for (int i = 0; i < writesetcount; i++) {
-//								txWritesetJson.add(strToJson(
-//									nsrwset.getRwset().getWrites(i).getValue().toStringUtf8()));
-//							}
-//						}
-//					}
+
+
 					}
 				}
+				// Получение первого элемента массива транзакций блока
+				if (transactionEntities.size() <= 0) continue;
+				TransactionEntity transactionEntity = transactionEntities.get(0);
 
 				BlockEntity blockEntity = new BlockEntity(
-					new Date(), // Исправить на данные блока
-					new Date(), // Исправить на данные блока
+					transactionEntity.get_txDate(),
+					transactionEntity.get_txTime(),
 					j,
 					blockData.get_blockchainId(),
 					blockTxCount,
