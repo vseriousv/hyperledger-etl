@@ -1,9 +1,9 @@
 package io.kiesnet.indexer;
 
-import io.kiesnet.indexer.domain.entity.BlockDataEntity;
-import io.kiesnet.indexer.domain.entity.BlockEntity;
-import io.kiesnet.indexer.domain.entity.TransactionEntity;
-import io.kiesnet.indexer.domain.entity.WriteSetTxsEntity;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.kiesnet.indexer.domain.entity.*;
 import io.kiesnet.indexer.domain.ports.BlockPort;
 import io.kiesnet.indexer.domain.ports.BlockchainConnectPort;
 import io.kiesnet.indexer.domain.ports.StoragePort;
@@ -26,9 +26,9 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Optional;
 
 public class Scan {
 	private BlockPort blockPort;
@@ -51,7 +51,7 @@ public class Scan {
 		long forkResistance,
 		long maxLimitReadBlock
 	)
-		throws InvalidArgumentException, ProposalException, ParseException, IOException, SQLException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, URISyntaxException, InterruptedException {
+		throws InvalidArgumentException, ProposalException, ParseException, IOException, SQLException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, URISyntaxException, InterruptedException, NoSuchFieldException {
 		// Подключение к блокчейну
 		Gateway gateway = blockchainConnectPort.connect();
 		Network network = gateway.getNetwork(tagNetwork);
@@ -167,9 +167,96 @@ public class Scan {
 							txPayload,
 							txWriteSet
 						);
+						// Парсинг только transfer транзакций
+						if (txMethod.equals("transfer")) {
+							ObjectNode txPayloadObject = new ObjectMapper().readValue(txPayload, ObjectNode.class);
+
+							if (txPayloadObject.has("@balance_log")) {
+								transactionEntity.set_payloadBalanceLogNumber(txPayloadObject.get("@balance_log").textValue());
+							}
+							if (txPayloadObject.has("type")) {
+								transactionEntity.set_payloadBalanceLogType(txPayloadObject.get("type").asLong());
+							}
+							if (txPayloadObject.has("rid")) {
+								transactionEntity.set_payloadBalanceLogRid(txPayloadObject.get("rid").textValue());
+							}
+							if (txPayloadObject.has("diff")) {
+								transactionEntity.set_payloadBalanceLogDiff(txPayloadObject.get("diff").asLong());
+							}
+							if (txPayloadObject.has("fee")) {
+								transactionEntity.set_payloadBalanceLogFee(txPayloadObject.get("fee").asLong());
+							}
+							if (txPayloadObject.has("amount")) {
+								transactionEntity.set_payloadBalanceLogAmount(txPayloadObject.get("amount").asLong());
+							}
+							if (txPayloadObject.has("memo")) {
+								transactionEntity.set_payloadBalanceLogMemo(txPayloadObject.get("memo").textValue());
+							}
+							if (txPayloadObject.has("pay_id")) {
+								transactionEntity.set_payloadBalanceLogPayId(txPayloadObject.get("pay_id").textValue());
+							}
+						}
+
+						// Парсинг только transfer транзакций
+						if (txMethod.equals("pay")) {
+							ObjectNode txPayloadObject = new ObjectMapper().readValue(txPayload, ObjectNode.class);
+							System.out.println("txPayloadObject : " + txPayloadObject);
+							JsonNode pay = txPayloadObject.get("pay");
+							JsonNode balanceLog = txPayloadObject.get("balance_log");
+
+							if (pay.has("@pay")) {
+								transactionEntity.set_payloadPayNumber(pay.get("@pay").textValue());
+							}
+							if (pay.has("pay_id")) {
+								transactionEntity.set_payloadPayId(pay.get("pay_id").textValue());
+							}
+							if (pay.has("amount")) {
+								transactionEntity.set_payloadPayAmount(pay.get("amount").asLong());
+							}
+							if (pay.has("fee")) {
+								transactionEntity.set_payloadPayFee(pay.get("fee").asLong());
+							}
+							if (pay.has("total_refund")) {
+								transactionEntity.set_payloadPayTotalRefund(pay.get("total_refund").asLong());
+							}
+							if (pay.has("rid")) {
+								transactionEntity.set_payloadPayRid(pay.get("rid").textValue());
+							}
+							if (pay.has("order_id")) {
+								transactionEntity.set_payloadPayOrderId(pay.get("order_id").asLong());
+							}
+							if (pay.has("memo")) {
+								transactionEntity.set_payloadPayMemo(pay.get("memo").textValue());
+							}
+
+							if (balanceLog.has("@balance_log")) {
+								transactionEntity.set_payloadBalanceLogNumber(balanceLog.get("@balance_log").textValue());
+							}
+							if (balanceLog.has("type")) {
+								transactionEntity.set_payloadBalanceLogType(balanceLog.get("type").asLong());
+							}
+							if (balanceLog.has("rid")) {
+								transactionEntity.set_payloadBalanceLogRid(balanceLog.get("rid").textValue());
+							}
+							if (balanceLog.has("diff")) {
+								transactionEntity.set_payloadBalanceLogDiff(balanceLog.get("diff").asLong());
+							}
+							if (balanceLog.has("fee")) {
+								transactionEntity.set_payloadBalanceLogFee(balanceLog.get("fee").asLong());
+							}
+							if (balanceLog.has("amount")) {
+								transactionEntity.set_payloadBalanceLogAmount(balanceLog.get("amount").asLong());
+							}
+							if (balanceLog.has("memo")) {
+								transactionEntity.set_payloadBalanceLogMemo(balanceLog.get("memo").textValue());
+							}
+							if (balanceLog.has("pay_id")) {
+								transactionEntity.set_payloadBalanceLogPayId(balanceLog.get("pay_id").textValue());
+							}
+						}
+
+						System.out.println(j + " : " + transactionEntity.get_txType() + " : " + transactionEntity);
 						transactionEntities.add(transactionEntity);
-
-
 					}
 				}
 				// Получение первого элемента массива транзакций блока
@@ -190,6 +277,7 @@ public class Scan {
 				blockEntities.add(blockEntity);
 				// Сохранение блоков в БД
 				Boolean saveIf = this.blockPort.saveDb(blockEntities, j, 10);
+//				Boolean saveIf = true;
 				// Отчистка массива блоков, когда произойдет запись в БД
 				if (saveIf) blockEntities.clear();
 			}

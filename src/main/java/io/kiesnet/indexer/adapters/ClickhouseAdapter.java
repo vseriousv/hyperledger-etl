@@ -45,18 +45,18 @@ public class ClickhouseAdapter implements BlockPort {
 					query += stringSave(transactionEntity.get_payloadProposalHash(), false);
 					query += stringSave(transactionEntity.get_payload(), true);
 					query += ")";
-					httpResponse(query);
-					saveWriteSetTxs(transactionEntity);
+//					httpResponse(query);
+//					saveWriteSetTxs(transactionEntity);
 
 					switch (transactionEntity.get_txType()) {
 						case "transfer":
 							this.saveMethodTransfer(transactionEntity);
 							break;
 						case "pay":
-							this.saveMethodPay();
+							this.saveMethodPay(transactionEntity);
 							break;
 						case "pay/refund":
-							this.saveMethodPayRefund();
+							this.saveMethodPayRefund(transactionEntity);
 							break;
 						case "deploy":
 							this.saveMethodDeploy();
@@ -124,13 +124,68 @@ public class ClickhouseAdapter implements BlockPort {
 
 	private void saveMethodTransfer(TransactionEntity transactionEntity) throws IOException, InterruptedException {
 		System.out.println("Save Transaction: transfer");
+		String txDate = dateFormat(transactionEntity.get_txDate(), "yyyy-MM-dd");
+		String txTime = dateFormat(transactionEntity.get_txTime(), "yyyy-MM-dd HH:mm:ss");
+		String query = "INSERT INTO tx_transfers VALUES (";
+		query += stringSave(txDate, false);
+		query += stringSave(txTime, false);
+		query += numberSave(transactionEntity.get_blockchainId(), false);
+		query += numberSave(transactionEntity.get_block(), false);
+		query += stringSave(transactionEntity.get_blockHash(), false);
+		query += stringSave(transactionEntity.get_txHash(), false);
+		query += stringSave(transactionEntity.get_chaincodeName(), false);
+		query += stringSave(transactionEntity.get_txType(), false);
+		query += stringSave(transactionEntity.get_validationCode(), false);
+		query += stringSave(transactionEntity.get_payloadBalanceLogNumber(), false);
+		query += numberSave(transactionEntity.get_payloadBalanceLogType(), false);
+		query += stringSave(transactionEntity.get_payloadBalanceLogRid(), false);
+		query += numberSave(transactionEntity.get_payloadBalanceLogDiff(), false);
+		query += numberSave(transactionEntity.get_payloadBalanceLogFee(), false);
+		query += numberSave(transactionEntity.get_payloadBalanceLogAmount(), false);
+		query += stringSave(transactionEntity.get_payloadBalanceLogMemo(), false);
+		query += stringSave(txTime, true);
+		query += ");";
+		httpResponse(query);
 	}
 
-	private void saveMethodPay() {
+	private void saveMethodPay(TransactionEntity transactionEntity) throws IOException, InterruptedException {
 		System.out.println("Save Transaction: pay");
+		String txDate = dateFormat(transactionEntity.get_txDate(), "yyyy-MM-dd");
+		String txTime = dateFormat(transactionEntity.get_txTime(), "yyyy-MM-dd HH:mm:ss");
+		String query = "INSERT INTO tx_payments VALUES (";
+		query += stringSave(txDate, false);
+		query += stringSave(txTime, false);
+		query += numberSave(transactionEntity.get_blockchainId(), false);
+		query += numberSave(transactionEntity.get_block(), false);
+		query += stringSave(transactionEntity.get_blockHash(), false);
+		query += stringSave(transactionEntity.get_txHash(), false);
+		query += stringSave(transactionEntity.get_chaincodeName(), false);
+		query += stringSave(transactionEntity.get_txType(), false);
+		query += stringSave(transactionEntity.get_validationCode(), false);
+		query += stringSave(transactionEntity.get_payloadPayNumber(), false);
+		query += stringSave(transactionEntity.get_payloadPayId(), false);
+		query += numberSave(transactionEntity.get_payloadPayAmount(), false);
+		query += numberSave(transactionEntity.get_payloadPayFee(), false);
+		query += numberSave(transactionEntity.get_payloadPayTotalRefund(), false);
+		query += stringSave(transactionEntity.get_payloadPayRid(), false);
+		query += numberSave(transactionEntity.get_payloadPayOrderId(), false);
+		query += stringSave(transactionEntity.get_payloadPayMemo(), false);
+		query += stringSave(txTime, false);
+		query += stringSave(transactionEntity.get_payloadBalanceLogNumber(), false);
+		query += numberSave(transactionEntity.get_payloadBalanceLogType(), false);
+		query += stringSave(transactionEntity.get_payloadBalanceLogRid(), false);
+		query += numberSave(transactionEntity.get_payloadBalanceLogDiff(), false);
+		query += numberSave(transactionEntity.get_payloadBalanceLogFee(), false);
+		query += numberSave(transactionEntity.get_payloadBalanceLogAmount(), false);
+		query += stringSave(transactionEntity.get_payloadBalanceLogMemo(), false);
+		query += stringSave(txTime, false);
+		query += stringSave(transactionEntity.get_payloadBalanceLogPayId(), true);
+		query += ");";
+		System.out.println("query:" + query);
+		httpResponse(query);
 	}
 
-	private void saveMethodPayRefund() {
+	private void saveMethodPayRefund(TransactionEntity transactionEntity) {
 		System.out.println("Save Transaction: pay/refund");
 	}
 
@@ -174,7 +229,7 @@ public class ClickhouseAdapter implements BlockPort {
 		query += stringSave(blockEntity.get_dataHash(), false);
 		query += stringSave(blockEntity.get_previousHash(), true);
 		query += ")";
-		httpResponse(query);
+//		httpResponse(query);
 	}
 
 	private void saveWriteSetTxs(TransactionEntity transactionEntity) throws IOException, InterruptedException {
@@ -200,8 +255,8 @@ public class ClickhouseAdapter implements BlockPort {
 			query += booleanSave(writeSetTxsEntity.get_setIsDelete(), true);
 			query += "),";
 		}
-		System.out.println(insertInto + query.substring(0, query.length() - 1) + ";");
-		httpResponse(insertInto + query.substring(0, query.length() - 1) + ";");
+
+//		httpResponse(insertInto + query.substring(0, query.length() - 1) + ";");
 	}
 
 	private String stringSave(String str, Boolean close) {
@@ -217,6 +272,14 @@ public class ClickhouseAdapter implements BlockPort {
 			return "" + number + " ";
 		} else {
 			return "" + number + ", ";
+		}
+	}
+
+	private String dateSave(Date date, Boolean close) {
+		if (close) {
+			return "" + dateFormat(date, "yyyy-MM-dd HH:mm:ss") + " ";
+		} else {
+			return "" + dateFormat(date, "yyyy-MM-dd HH:mm:ss") + ", ";
 		}
 	}
 
