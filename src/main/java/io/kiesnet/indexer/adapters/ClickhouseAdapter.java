@@ -45,8 +45,8 @@ public class ClickhouseAdapter implements BlockPort {
 					query += stringSave(transactionEntity.get_payloadProposalHash(), false);
 					query += stringSave(transactionEntity.get_payload(), true);
 					query += ")";
-//					httpResponse(query);
-//					saveWriteSetTxs(transactionEntity);
+					httpResponse(query);
+					saveWriteSetTxs(transactionEntity);
 
 					switch (transactionEntity.get_txType()) {
 						case "transfer":
@@ -185,8 +185,30 @@ public class ClickhouseAdapter implements BlockPort {
 		httpResponse(query);
 	}
 
-	private void saveMethodPayRefund(TransactionEntity transactionEntity) {
+	private void saveMethodPayRefund(TransactionEntity transactionEntity) throws IOException, InterruptedException {
 		System.out.println("Save Transaction: pay/refund");
+		String txDate = dateFormat(transactionEntity.get_txDate(), "yyyy-MM-dd");
+		String txTime = dateFormat(transactionEntity.get_txTime(), "yyyy-MM-dd HH:mm:ss");
+		String query = "INSERT INTO tx_refunds VALUES (";
+		query += stringSave(txDate, false);
+		query += stringSave(txTime, false);
+		query += numberSave(transactionEntity.get_blockchainId(), false);
+		query += numberSave(transactionEntity.get_block(), false);
+		query += stringSave(transactionEntity.get_blockHash(), false);
+		query += stringSave(transactionEntity.get_txHash(), false);
+		query += stringSave(transactionEntity.get_chaincodeName(), false);
+		query += stringSave(transactionEntity.get_txType(), false);
+		query += stringSave(transactionEntity.get_validationCode(), false);
+		query += stringSave(transactionEntity.get_payloadBalanceLogNumber(), false);
+		query += numberSave(transactionEntity.get_payloadBalanceLogType(), false);
+		query += stringSave(transactionEntity.get_payloadBalanceLogRid(), false);
+		query += numberSave(transactionEntity.get_payloadBalanceLogDiff(), false);
+		query += numberSave(transactionEntity.get_payloadBalanceLogAmount(), false);
+		query += stringSave(transactionEntity.get_payloadBalanceLogMemo(), false);
+		query += stringSave(txTime, true);
+		query += ");";
+		System.out.println("query:" + query);
+		httpResponse(query);
 	}
 
 	private void saveMethodPayPrune() {
@@ -229,7 +251,7 @@ public class ClickhouseAdapter implements BlockPort {
 		query += stringSave(blockEntity.get_dataHash(), false);
 		query += stringSave(blockEntity.get_previousHash(), true);
 		query += ")";
-//		httpResponse(query);
+		httpResponse(query);
 	}
 
 	private void saveWriteSetTxs(TransactionEntity transactionEntity) throws IOException, InterruptedException {
@@ -255,8 +277,11 @@ public class ClickhouseAdapter implements BlockPort {
 			query += booleanSave(writeSetTxsEntity.get_setIsDelete(), true);
 			query += "),";
 		}
-
-//		httpResponse(insertInto + query.substring(0, query.length() - 1) + ";");
+		if (query.length() > 0) {
+			String queryArray = query.substring(0, query.length() - 1);
+			String allQuery = insertInto + queryArray + ";";
+			httpResponse(allQuery);
+		}
 	}
 
 	private String stringSave(String str, Boolean close) {

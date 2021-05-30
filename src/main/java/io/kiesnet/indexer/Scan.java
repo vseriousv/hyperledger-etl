@@ -168,7 +168,7 @@ public class Scan {
 							txWriteSet
 						);
 						// Парсинг только transfer транзакций
-						if (txMethod.equals("transfer")) {
+						if (txMethod.equals("transfer") || txMethod.equals("pay/refund") ) {
 							ObjectNode txPayloadObject = new ObjectMapper().readValue(txPayload, ObjectNode.class);
 
 							if (txPayloadObject.has("@balance_log")) {
@@ -197,7 +197,7 @@ public class Scan {
 							}
 						}
 
-						// Парсинг только transfer транзакций
+						// Парсинг только payment транзакций
 						if (txMethod.equals("pay")) {
 							ObjectNode txPayloadObject = new ObjectMapper().readValue(txPayload, ObjectNode.class);
 							System.out.println("txPayloadObject : " + txPayloadObject);

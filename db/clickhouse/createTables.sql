@@ -126,7 +126,7 @@ CREATE TABLE hyperledger.tx_payments
     payload_pay_rid                  String,
     payload_pay_order_id             UInt32,
     payload_pay_memo                 String,
-    payload_pay_created_time         UInt32,
+    payload_pay_created_time         DateTime,
 
     payload_balance_log_number       String,
     payload_balance_log_type         UInt32,
