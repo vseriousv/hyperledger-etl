@@ -11,7 +11,7 @@ import org.hyperledger.fabric.sdk.BlockchainInfo;
 import org.hyperledger.fabric.sdk.Channel;
 import org.hyperledger.fabric.sdk.exception.InvalidArgumentException;
 import org.hyperledger.fabric.sdk.exception.ProposalException;
-import sample.UppsalaDTO;
+//import sample.UppsalaDTO;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -35,15 +35,17 @@ public class HyperledgerAdapter implements BlockchainConnectPort {
 		wallet.put("test-upp", identity);
 		Path networkConfigFile = Paths.get(configFilePath + "network-config-main.yaml");
 		Gateway.Builder builder = Gateway.createBuilder().identity(wallet, "test-upp").networkConfig(networkConfigFile);
+
 //		###############################
 
+
 //		############MainNet############
-//		String certificate = readFile(cryptoPath+"main-upp.crt.pem");
-//		PrivateKey privateKey = readPrivateKeyFromFile(cryptoPath+ "main-upp.key.pem");
-//		Identity identity = Identity.createIdentity("payprotocol", certificate, privateKey);
+	//	String certificate = readFile(cryptoPath+"main-upp.crt.pem");
+	//	PrivateKey privateKey = readPrivateKeyFromFile(cryptoPath+ "main-upp.key.pem");
+//		Wallet.Identity identity = Wallet.Identity.createIdentity("payprotocol", certificate, privateKey);
 //		wallet.put("main-upp", identity);
 //		Path networkConfigFile = Paths.get(configFilePath+"network-config-main.yaml");
-//		Gateway.Builder builder = Gateway.createBuilder().identity(wallet, "test-upp").networkConfig(networkConfigFile);
+//		Gateway.Builder builder = Gateway.createBuilder().identity(wallet, "main-upp").networkConfig(networkConfigFile);
 //		###############################
 
 		Gateway gateway = builder.connect();

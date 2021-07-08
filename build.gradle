@@ -26,6 +26,11 @@ dependencies {
 	// define any required OkHttp artifacts without version
 	implementation("com.squareup.okhttp3:okhttp")
 	implementation("com.squareup.okhttp3:logging-interceptor")
+
+	//compile group: 'mysql', name: 'mysql-connector-java', version: '8.0.15'
+	runtime "mysql:mysql-connector-java:8.0.25"
+
+
 }
 
 test {

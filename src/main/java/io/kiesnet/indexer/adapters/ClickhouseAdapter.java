@@ -323,7 +323,7 @@ public class ClickhouseAdapter implements BlockPort {
 	}
 
 	private HttpResponse<String> httpResponse(String query) throws IOException, InterruptedException {
-		String url = "http://localhost:8123/?database=hyperledger&user=default&password=Soc123";
+/*		String url = "http://localhost:8123/?database=hyperledger&user=default&password=Soc123";
 
 		HttpRequest.BodyPublisher bodyQuery = HttpRequest.BodyPublishers.ofString(query);
 		HttpRequest request = HttpRequest.newBuilder()
@@ -331,8 +331,12 @@ public class ClickhouseAdapter implements BlockPort {
 			.uri(URI.create(url))
 			.header("Content-Type", "text/plain")
 			.build();
-
 		HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-		return response;
+		return response; */
+	/// todo redirect to clickhouse
+		System.out.println(" Data for Clickhouse \n "+query);
+		return null;
 	}
+
+
 }

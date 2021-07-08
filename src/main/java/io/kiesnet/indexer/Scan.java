@@ -60,18 +60,29 @@ public class Scan {
 		ArrayList<BlockEntity> blockEntities = new ArrayList<BlockEntity>();
 
 		BlockchainInfo blockchaininfo = channel.queryBlockchainInfo();
-
+		long endBlockNumber = 1;
+		long startBlockNumber ;
 		// Подключаемся к MySQL получаем данные последнего блока
 		BlockDataEntity blockData = this.storagePort.getBlockData();
-		long endBlockNumber = blockData.get_number();
-		long startBlockNumber = 0;
+		if(blockData != null)
+		{
+			if (blockData.get_status() != 2)
+			{
+				System.out.println("Warning Larst block  number :"+ blockData.get_number() + " status :" + blockData.get_status());
+				return;
+			}
+	   	endBlockNumber = blockData.get_number()+ blockData.get_count();
+		}
+
 
 		// Бесконечный цикл проверки блокчейна
 		while (true) {
 			long heightBlocks = blockchaininfo.getHeight();
 
 			// Если высота блока равна послденему блоку, то спим 2 секунды
-			if (heightBlocks == endBlockNumber) {
+			// Aleksey say no need for this
+
+		/*	if (heightBlocks == endBlockNumber) {
 				try {
 					Thread.sleep(2000);
 				} catch (InterruptedException e) {
@@ -79,22 +90,22 @@ public class Scan {
 				}
 				System.out.println("GET_HEIGHT: " + heightBlocks);
 				continue;
-			}
+			} */
 
 			// Обновляем переменные
 			startBlockNumber = endBlockNumber;
-			endBlockNumber = blockchaininfo.getHeight();
+			endBlockNumber = heightBlocks;
 
 			// Получение инфаормации по каждому блоку: максимальное значение блока с учетом запаса на форк
 			for (long j = startBlockNumber; j < endBlockNumber - forkResistance; j++) {
 
-				BlockInfo blockInfo = channel.queryBlockByNumber(j);
-				BlockInfo blockNextInfo = channel.queryBlockByNumber(j + 1);
-				Block block = blockInfo.getBlock();
-				long blockTxCount = block.getData().getDataCount();
-				byte[] previousHash = blockInfo.getPreviousHash();
-				byte[] dataHash = blockInfo.getDataHash();
-				byte[] blockHash = blockNextInfo.getPreviousHash();
+					BlockInfo blockInfo = channel.queryBlockByNumber(j);
+					BlockInfo blockNextInfo = channel.queryBlockByNumber(j + 1);
+					Block block = blockInfo.getBlock();
+					long blockTxCount = block.getData().getDataCount();
+					byte[] previousHash = blockInfo.getPreviousHash();
+					byte[] dataHash = blockInfo.getDataHash();
+					byte[] blockHash = blockNextInfo.getPreviousHash();
 
 				ArrayList<TransactionEntity> transactionEntities = new ArrayList<TransactionEntity>();
 
@@ -120,8 +131,7 @@ public class Scan {
 
 					BlockInfo.TransactionEnvelopeInfo transactionEnvelopeInfo = (BlockInfo.TransactionEnvelopeInfo) envelopeinfo;
 
-					for (BlockInfo.TransactionEnvelopeInfo.TransactionActionInfo ta : transactionEnvelopeInfo
-						.getTransactionActionInfos()) {
+					for (BlockInfo.TransactionEnvelopeInfo.TransactionActionInfo ta : transactionEnvelopeInfo.getTransactionActionInfos()) {
 						for (int i = 0; i < ta.getChaincodeInputArgsCount(); i++) {
 							if (i == 0) {
 								txMethod = new String(ta.getChaincodeInputArgs(i));
@@ -140,7 +150,9 @@ public class Scan {
 									txTime,
 									txTime,
 									j,
-									blockData.get_blockchainId(),
+									/// todo crach here block data == nill
+								//	blockData.get_blockchainId(),
+									222,
 									Hex.toHexString(blockHash),
 									txId,
 									chainCodeName,
@@ -152,12 +164,15 @@ public class Scan {
 								txWriteSet.add(writeSetTxsEntity);
 							}
 						}
+
 						// Составление сущности транзакции
 						TransactionEntity transactionEntity = new TransactionEntity(
 							txTime,
 							txTime,
 							j,
-							blockData.get_blockchainId(),
+							// todo
+							//blockData.get_blockchainId(),
+							222,
 							Hex.toHexString(blockHash),
 							txId,
 							chainCodeName,
@@ -167,6 +182,7 @@ public class Scan {
 							txPayload,
 							txWriteSet
 						);
+
 						// Парсинг только transfer транзакций
 						if (txMethod.equals("transfer") || txMethod.equals("pay/refund") ) {
 							ObjectNode txPayloadObject = new ObjectMapper().readValue(txPayload, ObjectNode.class);
@@ -259,6 +275,8 @@ public class Scan {
 						transactionEntities.add(transactionEntity);
 					}
 				}
+
+
 				// Получение первого элемента массива транзакций блока
 				if (transactionEntities.size() <= 0) continue;
 				TransactionEntity transactionEntity = transactionEntities.get(0);
@@ -267,7 +285,9 @@ public class Scan {
 					transactionEntity.get_txDate(),
 					transactionEntity.get_txTime(),
 					j,
-					blockData.get_blockchainId(),
+				/// todo
+				//	blockData.get_blockchainId(),
+					222,
 					blockTxCount,
 					Hex.toHexString(blockHash),
 					Hex.toHexString(dataHash),

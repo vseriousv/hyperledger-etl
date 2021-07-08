@@ -23,7 +23,7 @@ public class ScheduledTasks {
 	public void reportCurrentTime() throws InvalidArgumentException, ProposalException, ParseException, IOException, SQLException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, URISyntaxException, InterruptedException, NoSuchFieldException {
 		BlockPort blockPort = new ClickhouseAdapter();
 		BlockchainConnectPort blockchainConnectPort = new HyperledgerAdapter();
-		StoragePort storagePort = new MySqlAdapter("jdbc:mysql://localhost:3306/bitquery", "root", "password");
+		StoragePort storagePort = new MySqlAdapter("jdbc:mysql://localhost:3306/spy", "root", "hello");
 		Scan scan = new Scan(blockPort, blockchainConnectPort, storagePort);
 		scan.worker("payprotocol", 10, 7, 0);
 	}

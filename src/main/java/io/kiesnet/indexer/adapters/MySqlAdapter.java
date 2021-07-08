@@ -36,6 +36,10 @@ public class MySqlAdapter implements StoragePort {
 			ResultSet resultSet = statement.executeQuery(query);
 			resultSet.next();
 
+			if (resultSet.getFetchSize() == 0)
+			{
+				return null;
+			}
 			BlockDataEntity blockDataEntity = new BlockDataEntity(
 				Long.valueOf(resultSet.getString("blocks.id")),
 				Long.valueOf(resultSet.getString("blocks.number")),
